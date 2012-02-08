@@ -21,13 +21,34 @@ class DirectoryProcessor
     cmd = create_find_cmd(directory_path, include_file_types, exclude_file_types)
     puts "Running find command => #{cmd}" if verbose
     file_list = create_file_list(cmd)
-    write_file_list_to_output_file(file_list)
-    puts "List of files to be processed is logged in #{FILE_LIST_PATH}" if verbose
-    # puts file_list
-    
+    process_files(file_list)
+    puts "Processed file output written in #{FILE_LIST_PATH}" if verbose
+  end
+  
+  def self.process_files(file_list)
+    delim = "\t"
+    header = ["Score", "Density", "Lines", "Chars"]
+
+    lines_for_output = []
+    lines_for_output << header.join(delim)
+    file_list.each do |file|
+      # puts file
+      result = FileProcessor.score_file(file)
+      line = []
+      line << result[:file_score]
+      line << result[:file_duplication_density]
+      line << result[:file_line_count]
+      line << result[:file_size]
+      line << file
+      lines_for_output << line.join("\t")
+      # puts ""
+    end
+
+    File.open(FILE_LIST_PATH, 'w') {|file_handle| file_handle.write(lines_for_output.join("\n"))}    
   end
 
-  def self.write_file_list_to_output_file(file_list)
+  # def self.write_file_list_to_output_file(file_list)
+  def self.write_file_output_file(file_list)
     File.open(FILE_LIST_PATH, 'w') {|file_handle| file_handle.write(file_list.join("\n"))}
   end
   
@@ -62,4 +83,5 @@ ruby driver.rb -d "/Volumes/ubuntu-dev/grunt/lib/aggregation/mdx/base/request"
 ruby driver.rb -d "/Volumes/ubuntu-dev/grunt" -i "png|js" -v
 ruby driver.rb -d "/Volumes/ubuntu-dev/peon" -i "rake|yml" -v -e ""
 ruby driver.rb -d "/Volumes/ubuntu-dev/grunt" -v -e "environment|initializer|spec|routes|boot"
+ruby driver.rb -d "/Volumes/ubuntu-dev/peon" -v -e "environment|initializer|spec|routes|boot"
 =end
